@@ -17,3 +17,5 @@ RUN for i in $(ls /lib/systemd/system/sysinit.target.wants/); \
 ENV TZ=Asia/Shanghai
 CMD ["/usr/sbin/init"]
 
+HEALTHCHECK --interval=10s --timeout=3s CMD systemctl is-active sshd || exit 1
+
