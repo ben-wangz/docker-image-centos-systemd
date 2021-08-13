@@ -13,7 +13,8 @@ RUN for i in $(ls /lib/systemd/system/sysinit.target.wants/); \
     && $(if [ "8" == "$(rpm --eval '%{centos_ver}')" ]; then echo dnf; else echo yum; fi) install -y openssh-server \
     && systemctl enable sshd \
     && mkdir -p $HOME/.ssh \
-    && chmod 600 $HOME/.ssh
+    && chmod 600 $HOME/.ssh \
+    && rm -rf /run/nologin
 ENV TZ=Asia/Shanghai
 CMD ["/usr/sbin/init"]
 
