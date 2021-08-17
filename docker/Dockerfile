@@ -14,9 +14,11 @@ RUN for i in $(ls /lib/systemd/system/sysinit.target.wants/); \
     && systemctl enable sshd \
     && mkdir -p $HOME/.ssh \
     && chmod 600 $HOME/.ssh \
-    && rm -rf /run/nologin
+    && echo "PermitRootLogin prohibit-password" >> /etc/ssh/sshd_config \
+    && echo "PasswordAuthentication no" >> /etc/ssh/sshd_config \
+    && echo "UseDNS no" >> /etc/ssh/sshd_config \
+    && sed -i -r 's/^(.*pam_nologin.so)/#\1/g' /etc/pam.d/sshd
 ENV TZ=Asia/Shanghai
 CMD ["/usr/sbin/init"]
 
 HEALTHCHECK --interval=10s --timeout=3s CMD systemctl is-active sshd || exit 1
-

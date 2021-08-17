@@ -1,0 +1,117 @@
+buildscript {
+    repositories {
+        maven { url("https://maven.aliyun.com/repository/public") }
+        maven { url("https://maven.aliyun.com/repository/spring") }
+        maven { url("https://maven.aliyun.com/repository/mapr-public") }
+        maven { url("https://maven.aliyun.com/repository/spring-plugin") }
+        maven { url("https://maven.aliyun.com/repository/gradle-plugin") }
+        maven { url("https://maven.aliyun.com/repository/google") }
+        maven { url("https://maven.aliyun.com/repository/jcenter") }
+    }
+}
+
+def mainVersion = "1.1.0"
+Map<String, String> envMap = new HashMap<>(System.getenv())
+def imageRepository = envMap.getOrDefault("IMAGE_REPOSITORY ", "wangz2019/centos-systemd")
+def centosVersionList = ["centos7.9.2009", "centos8.3.2011"]
+def archList = ["amd64", "arm64"]
+File runtimeDockerDirectory = project.file("${project.buildDir}/runtime/docker")
+task buildDockerImage() {
+    doFirst {
+        runtimeDockerDirectory.parentFile.mkdirs()
+        runtimeDockerDirectory.delete()
+        copy {
+            from project.file("docker")
+            into runtimeDockerDirectory
+        }
+    }
+    doLast {
+        for (String centosVersion : centosVersionList) {
+            for (String arch : archList) {
+                String imageWithTag = imageWithTag(imageRepository, mainVersion, centosVersion, arch)
+                exec {
+                    commandLine(
+                            "docker", "buildx", "build",
+                            "--platform", "linux/${arch}",
+                            "--rm", runtimeDockerDirectory,
+                            "-f", project.file("${runtimeDockerDirectory.getAbsolutePath()}/Dockerfile"),
+                            "-t", imageWithTag,
+                            "--build-arg", "CENOS_VERSION=${centosVersion}",
+                    )
+                }
+            }
+        }
+    }
+}
+
+task pushDockerImage(type: Exec) {
+    doLast {
+        for (String centosVersion : centosVersionList) {
+            for (String arch : archList) {
+                String imageWithTag = imageWithTag(imageRepository, mainVersion, centosVersion, arch)
+                exec {
+                    commandLine("docker", "push", imageWithTag)
+                }
+            }
+        }
+    }
+    dependsOn(buildDockerImage)
+}
+
+def containerName = "centos-systemd"
+def port = 1022
+task runDockerContainer(type: Exec) {
+    def keysDirectory = project.file("${project.buildDir}/runtime/keys")
+    def currentArch = currentArch()
+    doFirst {
+        keysDirectory.mkdirs()
+        copy {
+            from "${System.getenv("HOME")}/.ssh/id_rsa.pub"
+            into keysDirectory
+        }
+        println("running command: ${String.join(" ", getCommandLine())}")
+    }
+    executable("docker")
+    args(
+            "run", "--rm",
+            "-p", "${port}:22",
+            "--platform=linux/${currentArch}",
+            "--name", containerName,
+            "--privileged",
+            "-v", "${keysDirectory}/id_rsa.pub:/root/.ssh/authorized_keys:ro",
+            "-d", imageWithTag(imageRepository, mainVersion, centosVersionList.get(0), currentArch),
+    )
+    doLast {
+        println("login with command: ssh -o \"UserKnownHostsFile /dev/null\" -p ${port} root@localhost")
+    }
+}
+
+task stopDockerContainer(type: Exec) {
+    executable("docker")
+    args(
+            "stop", containerName
+    )
+}
+
+private static String imageWithTag(
+        String imageRepository,
+        String mainVersion,
+        String centosVersion,
+        String arch
+) {
+    return "${imageRepository}:${mainVersion}-${centosVersion}-linux-${arch}"
+}
+
+private static String currentArch() {
+    String arch = System.getProperty("os.arch")
+    switch (arch) {
+        case "x86":
+            return "i386"
+        case "x86_64":
+            return "amd64"
+        default:
+            throw new RuntimeException("not supported arch: ${arch}")
+    }
+}
+
+apply from: project.file("docs.nginx.gradle")
