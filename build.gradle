@@ -10,7 +10,7 @@ buildscript {
     }
 }
 
-def mainVersion = "1.1.0"
+def mainVersion = "1.2.0"
 Map<String, String> envMap = new HashMap<>(System.getenv())
 def imageRepository = envMap.getOrDefault("IMAGE_REPOSITORY ", "wangz2019/centos-systemd")
 def centosVersionList = ["centos7.9.2009", "centos8.3.2011"]
@@ -44,7 +44,7 @@ task buildDockerImage() {
     }
 }
 
-task pushDockerImage(type: Exec) {
+task pushDockerImage() {
     doLast {
         for (String centosVersion : centosVersionList) {
             for (String arch : archList) {

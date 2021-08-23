@@ -10,7 +10,7 @@ RUN for i in $(ls /lib/systemd/system/sysinit.target.wants/); \
     && rm -f /lib/systemd/system/sockets.target.wants/*initctl* \
     && rm -f /lib/systemd/system/basic.target.wants/* \
     && rm -f /lib/systemd/system/anaconda.target.wants/* \
-    && $(if [ "8" == "$(rpm --eval '%{centos_ver}')" ]; then echo dnf; else echo yum; fi) install -y openssh-server \
+    && $(if [ "8" == "$(rpm --eval '%{centos_ver}')" ]; then echo dnf; else echo yum; fi) install -y openssh-server openssh-clients \
     && systemctl enable sshd \
     && mkdir -p $HOME/.ssh \
     && chmod 600 $HOME/.ssh \
