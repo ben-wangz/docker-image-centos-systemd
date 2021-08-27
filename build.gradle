@@ -109,6 +109,9 @@ private static String currentArch() {
             return "i386"
         case "x86_64":
             return "amd64"
+        case "amd64":
+        case "arm64":
+            return arch
         default:
             throw new RuntimeException("not supported arch: ${arch}")
     }
