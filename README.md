@@ -51,5 +51,5 @@
       ```
 5. you can also jump into the container with ssh
     * ```shell
-      ssh -o \"UserKnownHostsFile /dev/null\" -p 1022 root@localhost
+      ssh -o "UserKnownHostsFile /dev/null" -p 1022 root@localhost
       ```
