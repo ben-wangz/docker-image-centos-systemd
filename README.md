@@ -2,7 +2,7 @@
 
 1. docker image: [dockerhub](https://hub.docker.com/r/wangz2019/docker-systemd)
 2. source code: [github](https://github.com/ben-wangz/docker-systemd)
-3. docs: [docker-systemd-docs](https://ben-wangz.github.io/docker-systemd)
+3. docs: [docker-systemd-docs](https://ben-wangz.github.io/docker-systemd/index.html)
 
 ## what's it
 
