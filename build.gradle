@@ -12,7 +12,7 @@ buildscript {
 
 def mainVersion = "1.3.0"
 Map<String, String> envMap = new HashMap<>(System.getenv())
-def imageRepository = envMap.getOrDefault("IMAGE_REPOSITORY ", "wangz2019/centos-systemd")
+def imageRepository = envMap.getOrDefault("IMAGE_REPOSITORY ", "wangz2019/docker-systemd")
 String imageWithTagPrefix = "${imageRepository}:${mainVersion}"
 def centosVersionList = ["centos7.9.2009", "centos8.3.2011"]
 File runtimeDockerDirectory = project.file("${project.buildDir}/runtime/docker")
@@ -60,7 +60,7 @@ task pushDockerImage() {
     dependsOn(buildDockerImage)
 }
 
-def containerName = "centos-systemd"
+def containerName = "docker-systemd"
 def port = 1022
 task runDockerContainer(type: Exec) {
     def keysDirectory = project.file("${project.buildDir}/runtime/keys")
