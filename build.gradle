@@ -10,11 +10,11 @@ buildscript {
     }
 }
 
-def mainVersion = "1.2.0"
+def mainVersion = "1.3.0"
 Map<String, String> envMap = new HashMap<>(System.getenv())
 def imageRepository = envMap.getOrDefault("IMAGE_REPOSITORY ", "wangz2019/centos-systemd")
+String imageWithTagPrefix = "${imageRepository}:${mainVersion}"
 def centosVersionList = ["centos7.9.2009", "centos8.3.2011"]
-def archList = ["amd64", "arm64"]
 File runtimeDockerDirectory = project.file("${project.buildDir}/runtime/docker")
 task buildDockerImage() {
     doFirst {
@@ -27,18 +27,15 @@ task buildDockerImage() {
     }
     doLast {
         for (String centosVersion : centosVersionList) {
-            for (String arch : archList) {
-                String imageWithTag = imageWithTag(imageRepository, mainVersion, centosVersion, arch)
-                exec {
-                    commandLine(
-                            "docker", "buildx", "build",
-                            "--platform", "linux/${arch}",
-                            "--rm", runtimeDockerDirectory,
-                            "-f", project.file("${runtimeDockerDirectory.getAbsolutePath()}/Dockerfile"),
-                            "-t", imageWithTag,
-                            "--build-arg", "CENOS_VERSION=${centosVersion}",
-                    )
-                }
+            println("building with centosVersion=${centosVersion}")
+            exec {
+                commandLine(
+                        "docker", "build", "--rm",
+                        "-f", project.file("${runtimeDockerDirectory.getAbsolutePath()}/Dockerfile"),
+                        "-t", imageWithTag(imageWithTagPrefix, centosVersion),
+                        "--build-arg", "CENOS_VERSION=${centosVersion}",
+                        runtimeDockerDirectory,
+                )
             }
         }
     }
@@ -47,11 +44,16 @@ task buildDockerImage() {
 task pushDockerImage() {
     doLast {
         for (String centosVersion : centosVersionList) {
-            for (String arch : archList) {
-                String imageWithTag = imageWithTag(imageRepository, mainVersion, centosVersion, arch)
-                exec {
-                    commandLine("docker", "push", imageWithTag)
-                }
+            exec {
+                commandLine(
+                        "docker", "buildx", "build",
+                        "--platform", "linux/amd64,linux/arm64",
+                        "--rm",
+                        "-f", project.file("${runtimeDockerDirectory.getAbsolutePath()}/Dockerfile"),
+                        "-t", imageWithTag(imageWithTagPrefix, centosVersion),
+                        "--push",
+                        runtimeDockerDirectory,
+                )
             }
         }
     }
@@ -62,7 +64,6 @@ def containerName = "centos-systemd"
 def port = 1022
 task runDockerContainer(type: Exec) {
     def keysDirectory = project.file("${project.buildDir}/runtime/keys")
-    def currentArch = currentArch()
     doFirst {
         keysDirectory.mkdirs()
         copy {
@@ -75,11 +76,10 @@ task runDockerContainer(type: Exec) {
     args(
             "run", "--rm",
             "-p", "${port}:22",
-            "--platform=linux/${currentArch}",
             "--name", containerName,
             "--privileged",
             "-v", "${keysDirectory}/id_rsa.pub:/root/.ssh/authorized_keys:ro",
-            "-d", imageWithTag(imageRepository, mainVersion, centosVersionList.get(0), currentArch),
+            "-d", imageWithTag(imageWithTagPrefix, centosVersionList.get(0)),
     )
     doLast {
         println("login with command: ssh -o \"UserKnownHostsFile /dev/null\" -p ${port} root@localhost")
@@ -94,27 +94,10 @@ task stopDockerContainer(type: Exec) {
 }
 
 private static String imageWithTag(
-        String imageRepository,
-        String mainVersion,
-        String centosVersion,
-        String arch
+        String imageWithTagPrefix,
+        String centosVersion
 ) {
-    return "${imageRepository}:${mainVersion}-${centosVersion}-linux-${arch}"
-}
-
-private static String currentArch() {
-    String arch = System.getProperty("os.arch")
-    switch (arch) {
-        case "x86":
-            return "i386"
-        case "x86_64":
-            return "amd64"
-        case "amd64":
-        case "arm64":
-            return arch
-        default:
-            throw new RuntimeException("not supported arch: ${arch}")
-    }
+    return "${imageWithTagPrefix}-${centosVersion}"
 }
 
 apply from: project.file("docs.nginx.gradle")

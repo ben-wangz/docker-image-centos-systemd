@@ -13,7 +13,7 @@
 ## limitations
 
 1. only supporting amd64 and arm64
-2. pushing 4 tags for each version released
+2. only supporting centos7 and centos8 as base image
 3. "UseDNS no" written to /etc/ssh/sshd_config
 
 ## todo list
@@ -53,3 +53,9 @@
     * ```shell
       ssh -o "UserKnownHostsFile /dev/null" -p 1022 root@localhost
       ```
+6. build multi-platform images and push them to docker registry
+    * ```shell
+      ./gradlew :pushDockerImage
+      ```
+    * you need an environment to build multi-platform
+      images: [develop with docker](https://blog.geekcity.tech/#/docs/develop.with.docker)
