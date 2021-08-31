@@ -18,8 +18,7 @@
 
 ## todo list
 
-1. merge 4 tags into one
-2. add test scripts for sshd
+1. add test scripts for sshd
 
 ## usage
 
