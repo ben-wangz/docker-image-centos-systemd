@@ -1,8 +1,8 @@
-# docker-image-centos-systemd
+# docker-systemd
 
 1. docker image: [dockerhub](https://hub.docker.com/r/wangz2019/centos-systemd)
-2. source code: [github](https://github.com/ben-wangz/docker-image-centos-systemd)
-3. docs: [docker-image-centos-systemd-docs](https://ben-wangz.github.io/docker-image-centos-systemd)
+2. source code: [github](https://github.com/ben-wangz/docker-systemd)
+3. docs: [docker-systemd-docs](https://ben-wangz.github.io/docker-systemd)
 
 ## what's it
 
